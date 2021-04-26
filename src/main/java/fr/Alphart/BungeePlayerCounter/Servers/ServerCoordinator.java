@@ -1,25 +1,22 @@
 package fr.Alphart.BungeePlayerCounter.Servers;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
-
-import lombok.Getter;
-import lombok.Setter;
-
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
-
 import fr.Alphart.BungeePlayerCounter.BPC;
 import fr.Alphart.BungeePlayerCounter.PluginMessage.PluginMessageReader;
+import lombok.Getter;
+import lombok.Setter;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 public class ServerCoordinator {
     public static final String globalGroupName = "globalCount";
-    private SetMultimap<String, ServerGroup> serverGroups = HashMultimap.create();
+    private final SetMultimap<String, ServerGroup> serverGroups = HashMultimap.create();
     @Setter
     @Getter
     private String currentServer = "";
@@ -36,7 +33,7 @@ public class ServerCoordinator {
         }
 
         // This entry is for the global player count
-        serverGroups.put("ALL", new ServerGroup(globalGroupName, Arrays.asList("ALL")));
+        serverGroups.put("ALL", new ServerGroup(globalGroupName, Collections.singletonList("ALL")));
         serverGroups.putAll(BPC.getInstance().getConf().getServersGroups());
     }
 
@@ -49,10 +46,6 @@ public class ServerCoordinator {
 
     public void addGroup(final String serverName, final ServerGroup serverGroup) {
         serverGroups.put(serverName, serverGroup);
-    }
-
-    public Set<ServerGroup> getGroupsByServer(final String server) {
-        return serverGroups.get(server);
     }
 
     public Collection<ServerGroup> getServerGroups() {
@@ -85,7 +78,7 @@ public class ServerCoordinator {
     }
 
     /**
-     * This task should be runned async as it uses the network and might induce high latency
+     * This task should be run async as it uses the network and might induce high latency
      */
     class UpdateProxyPlayerCountTask implements Runnable {
         final Pinger ping = new Pinger("bungee", BPC.getInstance().getConf().getProxyAddress());

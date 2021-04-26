@@ -1,41 +1,34 @@
 package fr.Alphart.BungeePlayerCounter.Servers;
 
+import fr.Alphart.BungeePlayerCounter.BPC;
+import lombok.Getter;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import lombok.Getter;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-
-import fr.Alphart.BungeePlayerCounter.BPC;
 
 /**
  * This class is used to handle groups when manual display is enabled
  */
 @Getter
 public class ServerGroup {
-    @Getter
-    private String displayName;
-    @Getter
-    private int playerCount;
-    private Map<String, Integer> serversPC;
+    @Getter private String displayName;
+    @Getter private int playerCount;
+    private final Map<String, Integer> serversPC;
     private Pinger ping = null;
     private InetSocketAddress address = null;
 
     /**
      * Constructor
-     *
-     * @param displayName
-     * @param servers
      */
     public ServerGroup(String name, List<String> servers) {
         displayName = ChatColor.translateAlternateColorCodes('&', name);
         if (displayName.length() > 16)
             displayName = displayName.substring(0, 16);
-        serversPC = new HashMap<String, Integer>();
+        serversPC = new HashMap<>();
         for (String serverName : servers) {
             serversPC.put(serverName, 0);
         }
@@ -45,14 +38,13 @@ public class ServerGroup {
         displayName = ChatColor.translateAlternateColorCodes('&', name);
         if (displayName.length() > 16)
             displayName = displayName.substring(0, 16);
-        serversPC = new HashMap<String, Integer>();
+        serversPC = new HashMap<>();
         for (String serverName : servers) {
             serversPC.put(serverName, 0);
         }
         this.address = address;
         ping = new Pinger(name, address);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(BPC.getInstance(), ping, 20L,
-                20L * updateInterval);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(BPC.getInstance(), ping, 20L, 20L * updateInterval);
     }
 
     private void calculatePlayerCount() {
@@ -65,9 +57,6 @@ public class ServerGroup {
 
     /**
      * Set the player count of a server and then update the total player count
-     *
-     * @param server
-     * @param playerCount
      */
     public void updatePlayerCount(String server, Integer playerCount) {
         if (serversPC.containsKey(server)) {
@@ -83,7 +72,7 @@ public class ServerGroup {
         return ping.isOnline();
     }
 
-    public boolean isAdressSet() {
+    public boolean isAddressSet() {
         return address != null;
     }
 

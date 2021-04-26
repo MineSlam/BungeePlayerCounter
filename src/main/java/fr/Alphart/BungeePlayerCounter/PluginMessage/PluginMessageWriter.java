@@ -1,17 +1,15 @@
 package fr.Alphart.BungeePlayerCounter.PluginMessage;
 
+import com.google.common.collect.Sets;
+import fr.Alphart.BungeePlayerCounter.BPC;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
-
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
-import com.google.common.collect.Sets;
-
-import fr.Alphart.BungeePlayerCounter.BPC;
 
 public class PluginMessageWriter {
     private final String channel;
@@ -21,9 +19,11 @@ public class PluginMessageWriter {
 
         final Set<String> channels = Sets.newHashSet();
         channels.add("BungeeCord"); // Always need to register to the B/C channel in order to send GetServer message
+
         if (!channelName.equalsIgnoreCase("BungeeCord")) {
             channels.add(channelName);
         }
+
         for (final String channel : channels) {
             Bukkit.getMessenger().registerOutgoingPluginChannel(BPC.getInstance(), channel);
             BPC.debug("Registering outgoing plugin message channel. Channel=%s", channel);
@@ -38,6 +38,7 @@ public class PluginMessageWriter {
 
             player.sendPluginMessage(BPC.getInstance(), "BungeeCord", b.toByteArray());
             BPC.debug("Sending GetServers message.");
+
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -51,6 +52,7 @@ public class PluginMessageWriter {
 
             player.sendPluginMessage(BPC.getInstance(), "BungeeCord", b.toByteArray());
             BPC.debug("Sending GetServer message.");
+
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -66,6 +68,7 @@ public class PluginMessageWriter {
                 p.sendPluginMessage(BPC.getInstance(), channel, b.toByteArray());
                 BPC.debug("Sending PlayerCount message for server=%s", server);
             }
+
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }

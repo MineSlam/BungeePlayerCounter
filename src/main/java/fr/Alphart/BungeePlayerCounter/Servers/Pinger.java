@@ -1,39 +1,24 @@
 package fr.Alphart.BungeePlayerCounter.Servers;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
-import java.util.List;
-
-import com.google.gson.JsonElement;
+import com.google.gson.Gson;
+import fr.Alphart.BungeePlayerCounter.BPC;
+import fr.Alphart.BungeePlayerCounter.Servers.Pinger.VarIntStreams.VarIntDataInputStream;
+import fr.Alphart.BungeePlayerCounter.Servers.Pinger.VarIntStreams.VarIntDataOutputStream;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import com.google.gson.Gson;
-
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.chat.ComponentSerializer;
-
-import fr.Alphart.BungeePlayerCounter.BPC;
-import fr.Alphart.BungeePlayerCounter.Servers.Pinger.VarIntStreams.VarIntDataInputStream;
-import fr.Alphart.BungeePlayerCounter.Servers.Pinger.VarIntStreams.VarIntDataOutputStream;
+import java.io.*;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class Pinger implements Runnable {
     private static final Gson gson = new Gson();
-    private InetSocketAddress address;
-    private String parentGroupName;
+    private final InetSocketAddress address;
+    private final String parentGroupName;
     private boolean online = false;
-    private int maxPlayers = -1;
 
     public Pinger(final String parentGroupName, final InetSocketAddress address) {
         this.parentGroupName = parentGroupName;
@@ -45,7 +30,7 @@ public class Pinger implements Runnable {
     }
 
     public int getMaxPlayers() {
-        return maxPlayers;
+        return -1;
     }
 
     @Override
@@ -53,20 +38,19 @@ public class Pinger implements Runnable {
         try {
             final PingResponse response = ping(address, 1000);
             online = true;
-            maxPlayers = response.getPlayers().getMax();
             BPC.debug("Successfully pinged " + parentGroupName + " group, result : " + response);
+
         } catch (IOException e) {
             if (!(e instanceof ConnectException) && !(e instanceof SocketTimeoutException)) {
-                BPC.severe("An unexcepted error occured while pinging " + parentGroupName + " server", e);
+                BPC.severe("An unexpected error occurred while pinging " + parentGroupName + " server", e);
             }
+
             online = false;
         }
     }
 
     public static PingResponse ping(final InetSocketAddress host, final int timeout) throws IOException {
-        Socket socket = null;
-        try {
-            socket = new Socket();
+        try (Socket socket = new Socket()) {
             OutputStream outputStream;
             VarIntDataOutputStream dataOutputStream;
             InputStream inputStream;
@@ -103,9 +87,11 @@ public class Pinger implements Runnable {
             if (id == -1) {
                 throw new IOException("Premature end of stream.");
             }
+
             if (id != 0x00) {
                 throw new IOException(String.format("Invalid packetID. Expecting %d got %d", 0x00, id));
             }
+
             int length = dataInputStream.readVarInt();
             if (length == -1) {
                 throw new IOException("Premature end of stream.");
@@ -132,14 +118,16 @@ public class Pinger implements Runnable {
             if (id == -1) {
                 throw new IOException("Premature end of stream.");
             }
+
             if (id != 0x01) {
                 throw new IOException(String.format("Invalid packetID. Expecting %d got %d", 0x01, id));
             }
-            long pingtime = dataInputStream.readLong();
+
+            long pingTime = dataInputStream.readLong();
 
             synchronized (gson) {
                 final PingResponse response = gson.fromJson(json, PingResponse.class);
-                response.setTime((int) (now - pingtime));
+                response.setTime((int) (now - pingTime));
                 dataOutputStream.close();
                 outputStream.close();
                 inputStreamReader.close();
@@ -147,65 +135,12 @@ public class Pinger implements Runnable {
                 socket.close();
                 return response;
             }
-        } catch (final IOException e) {
-            throw e;
-        } finally {
-            if (socket != null) {
-                socket.close();
-            }
         }
     }
 
     @ToString
-    public class PingResponse {
-        private JsonElement description;
-        @Getter
-        private Players players;
-        @Getter
-        private Version version;
-        @Getter
-        private String favicon;
-        @Setter
-        @Getter
-        private int time;
-
-        public JsonElement getRawDescription() {
-            return description;
-        }
-
-        public String getDescription() {
-            return new TextComponent(getFancyDescription()).toLegacyText();
-        }
-
-        public BaseComponent[] getFancyDescription() {
-            return ComponentSerializer.parse(description.toString());
-        }
-
-        public boolean isFull() {
-            return players.max <= players.online;
-        }
-
-        @Getter
-        @ToString
-        public class Players {
-            private int max;
-            private int online;
-            private List<Player> sample;
-
-            @Getter
-            public class Player {
-                private String name;
-                private String id;
-
-            }
-        }
-
-        @Getter
-        @ToString
-        public class Version {
-            private String name;
-            private String protocol;
-        }
+    public static class PingResponse {
+        @Setter @Getter private int time;
     }
 
     static class VarIntStreams {
@@ -221,11 +156,14 @@ public class Pinger implements Runnable {
             public int readVarInt() throws IOException {
                 int i = 0;
                 int j = 0;
+
                 while (true) {
                     int k = readByte();
                     i |= (k & 0x7F) << j++ * 7;
+
                     if (j > 5)
                         throw new RuntimeException("VarInt too big");
+
                     if ((k & 0x80) != 128)
                         break;
                 }
