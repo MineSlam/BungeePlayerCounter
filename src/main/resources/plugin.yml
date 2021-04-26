@@ -2,6 +2,8 @@ name: BungeePlayerCounter
 author: Alphart
 version: ${project.version}
 main: fr.Alphart.BungeePlayerCounter.BPC
+api-version: 1.16
+
 permissions:
     bungeeplayercounter.display:
         description: Display the scoreboard
@@ -12,7 +14,8 @@ permissions:
     bungeeplayercounter.reload:
         description: Reload the plugin
         default: op
+
 commands:
   bpc:
-    description: Main command of the plug !
+    description: Main command of the plugin!
     usage: /<command>   
