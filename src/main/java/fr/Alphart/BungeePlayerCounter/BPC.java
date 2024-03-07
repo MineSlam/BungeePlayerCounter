@@ -12,6 +12,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -64,7 +65,7 @@ public class BPC extends JavaPlugin {
         }
     }
 
-    @SuppressWarnings({"UnstableApiUsage", "ResultOfMethodCallIgnored"})
+    @SuppressWarnings({"ResultOfMethodCallIgnored"})
     public boolean toggleDebug() {
         if (debugMode) {
             for (final Handler handler : getLogger().getHandlers()) {
@@ -90,19 +91,7 @@ public class BPC extends JavaPlugin {
                         "Operating System : " + System.getProperty("os.name"),
                         "------------------------------------------------------------"));
 
-                final FileHandler handler = new FileHandler(debugFile.getAbsolutePath(), true);
-                handler.setFormatter(new Formatter() {
-                    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-
-                    @Override
-                    public String format(LogRecord record) {
-                        String pattern = "time [level] message\n";
-                        return pattern.replace("level", record.getLevel().getName())
-                                .replace("message", record.getMessage())
-                                .replace("[BungeePlayerCounter]", "")
-                                .replace("time", sdf.format(Calendar.getInstance().getTime()));
-                    }
-                });
+                final FileHandler handler = getFileHandler(debugFile);
 
                 getLogger().addHandler(handler);
                 getLogger().setLevel(Level.CONFIG);
@@ -114,6 +103,23 @@ public class BPC extends JavaPlugin {
             }
         }
         return debugMode = !debugMode;
+    }
+
+    private static FileHandler getFileHandler(File debugFile) throws IOException {
+        final FileHandler handler = new FileHandler(debugFile.getAbsolutePath(), true);
+        handler.setFormatter(new Formatter() {
+            private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+
+            @Override
+            public String format(LogRecord record) {
+                String pattern = "time [level] message\n";
+                return pattern.replace("level", record.getLevel().getName())
+                        .replace("message", record.getMessage())
+                        .replace("[BungeePlayerCounter]", "")
+                        .replace("time", sdf.format(Calendar.getInstance().getTime()));
+            }
+        });
+        return handler;
     }
 
     public static String clr(final String message, final Object... args) {

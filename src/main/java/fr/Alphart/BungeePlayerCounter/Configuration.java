@@ -38,6 +38,7 @@ public class Configuration {
     private String serverIndicator;
     private boolean automaticDisplay;
     private Integer updateInterval;
+    @Getter
     private String pluginMessageChannel;
     private String onlinePrefix;
     private String offlinePrefix;
@@ -86,7 +87,7 @@ public class Configuration {
         // Update the header
         final FileConfiguration defaultConfig = YamlConfiguration.loadConfiguration(
                 new InputStreamReader(Objects.requireNonNull(BPC.getInstance().getResource("config.yml")), Charsets.UTF_8));
-        plugin.getConfig().options().header(defaultConfig.options().header());
+        plugin.getConfig().options().setHeader(defaultConfig.options().getHeader());
 
         plugin.saveConfig();
     }
@@ -125,7 +126,7 @@ public class Configuration {
                 proxyAddress = new InetSocketAddress(InetAddress.getByName(addressArray[0]), Integer.parseInt(addressArray[1]));
 
             } catch (final IllegalArgumentException | UnknownHostException | ArrayIndexOutOfBoundsException e) {
-                bpcLogger.log(Level.WARNING, "The address of the bungee proxy is not correct. It must have the following format: 'ip:port'", e);
+                bpcLogger.log(Level.WARNING, String.format("The address of the bungee proxy is not correct. It must have the following format: 'ip:port'. %s.", e.getMessage()));
             }
         }
 
@@ -180,7 +181,7 @@ public class Configuration {
                             address = new InetSocketAddress(InetAddress.getByName(addressArray[0]), Integer.parseInt(addressArray[1]));
 
                         } catch (IllegalArgumentException | UnknownHostException e) {
-                            bpcLogger.log(Level.WARNING, "The address of the group " + groupName + " is not correct.", e);
+                            bpcLogger.log(Level.WARNING, String.format("The address of the group '%s' is not correct. %s.", groupName, e.getMessage()));
                         }
                     }
 
